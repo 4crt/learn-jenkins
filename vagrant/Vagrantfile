@@ -1,0 +1,40 @@
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "generic/centos8"
+  config.ssh.insert_key = false
+  config.vm.provider "virtualbox"
+  # config.vm.synced_folder '.', '/vagrant', disabled: true
+
+  config.vm.provider :virtualbox do |v|
+    v.memory = 2048
+    v.cpus = 2
+    v.linked_clone = true
+    v.customize ['modifyvm', :id, '--audio', 'none']
+  end
+
+  boxes = [
+    { :name => "leader", :ip => "192.168.56.2", :host_port => "8082" },
+    { :name => "node01", :ip => "192.168.56.3", :host_port => "8083" },
+    # { :name => "node02", :ip => "192.168.56.4" }
+  ]
+
+  boxes.each_with_index do |opts, index|
+    config.vm.define opts[:name] do |config|
+      config.vm.hostname = opts[:name] + ".jenkins.test"
+      config.vm.network :forwarded_port, host: opts[:host_port], guest: 80
+      config.vm.network :private_network, ip: opts[:ip]
+
+      # Provision all the VMs using Ansible after last VM is up.
+      if index == boxes.size - 1
+        config.vm.provision "ansible" do |ansible|
+          ansible.compatibility_mode = "2.0"
+          ansible.playbook = "../ansible/chapter_one/main.yml"
+          ansible.inventory_path = "../ansible/chapter_one/inventory"
+          ansible.limit = "all"
+        end
+      end
+    end
+  end
+
+end

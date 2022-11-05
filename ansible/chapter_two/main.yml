@@ -1,0 +1,32 @@
+---
+- hosts: all
+  gather_facts: true
+  become: true
+  vars:
+    java_packages:
+      - java-11-openjdk
+      # - java-11-amazon-corretto
+  roles:
+  - role: geerlingguy.java
+
+- hosts: leaders
+  gather_facts: false
+  become: true
+  roles:
+  - role: geerlingguy.jenkins
+    vars:
+      jenkins_package_state: latest
+      jenkins_plugins:
+        dark-theme
+  tasks:
+  - include_tasks: tasks/redirect-port.yml
+  - include_tasks: tasks/prepare-ssh-key.yml
+
+- hosts: followers
+  gather_facts: false
+  become: true
+  tasks:
+  - include_tasks: tasks/prepare-to-launch-agent-via-ssh.yml
+    vars:
+      leader_public_key: "{{ hostvars['leader']['leader_public_key'] }}"
+      jenkins_user_name: jenkins

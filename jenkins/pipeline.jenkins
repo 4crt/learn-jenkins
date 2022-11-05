@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+    // agent agent { label 'node01' }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/spring-projects/spring-petclinic.git', branch: 'main'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh './mvnw clean package'
+            }
+
+            post {
+                always {
+                    junit '**/target/surefire-reports/TEST-*.xml'
+                    archiveArtifacts 'target/*.jar'
+                }
+            }
+        }
+    }
+}

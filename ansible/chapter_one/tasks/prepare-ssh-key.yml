@@ -1,0 +1,8 @@
+- name: Generate an OpenSSH keypair
+  community.crypto.openssh_keypair:
+    path: /tmp/id_ssh_rsa
+  register: keypair
+
+- name: Capture public ssh key
+  ansible.builtin.set_fact:
+    leader_public_key: "{{ keypair.public_key }}"

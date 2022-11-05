@@ -1,0 +1,36 @@
+- name: Create jenkins-group group
+  ansible.builtin.group:
+    name: "{{ jenkins_user_name }}-group"
+    state: present
+- name: Add jenkins-user, appending the jenkins-group to the user's groups
+  ansible.builtin.user:
+    name: "{{ jenkins_user_name }}-user"
+    shell: /bin/bash
+    groups: "{{ jenkins_user_name }}-group"
+    append: yes
+  register: jenkins_user
+- name: Ensure ~/.ssh directory exists
+  ansible.builtin.file:
+    path: "/home/{{ jenkins_user.name }}/.ssh"
+    state: directory
+    mode: '0700'
+- name: Check authorized_keys file exists
+  ansible.builtin.stat:
+    path: "/home/{{ jenkins_user.name }}/.ssh/authorized_keys"
+  register: stat_result
+- name: Create empty file
+  ansible.builtin.file:
+    path: "/home/{{ jenkins_user.name }}/.ssh/authorized_keys"
+    state: touch
+    mode: '0600'
+  when: not stat_result.stat.exists
+- name: Put pubkey to followers
+  ansible.builtin.lineinfile:
+    path: "/home/{{ jenkins_user.name }}/.ssh/authorized_keys"
+    line: "{{ leader_public_key }}"
+- name: Ensure right owner and group
+  ansible.builtin.file:
+    path: "/home/{{ jenkins_user.name }}/.ssh"
+    owner: "{{ jenkins_user.name }}"
+    group: "{{ jenkins_user_name }}-group"
+    recurse: true

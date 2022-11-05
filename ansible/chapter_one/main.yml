@@ -1,0 +1,23 @@
+---
+- hosts: all
+  gather_facts: false
+  become: true
+  pre_tasks:
+  - include_tasks: tasks/install-openjdk.yml
+  - include_tasks: tasks/redirect-port.yml
+
+- hosts: leaders
+  gather_facts: false
+  become: true
+  tasks:
+  - include_tasks: tasks/prepare-ssh-key.yml
+  - include_tasks: tasks/install-jenkins.yml
+
+- hosts: followers
+  gather_facts: false
+  become: true
+  tasks:
+  - include_tasks: tasks/prepare-to-launch-agent-via-ssh.yml
+    vars:
+      leader_public_key: "{{ hostvars['leader']['leader_public_key'] }}"
+      jenkins_user_name: jenkins

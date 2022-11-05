@@ -1,0 +1,6 @@
+[leaders]
+leader ansible_host=192.168.56.2
+
+[followers]
+node01 ansible_host=192.168.56.3
+# node02 ansible_host=192.168.56.4

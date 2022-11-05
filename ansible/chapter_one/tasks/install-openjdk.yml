@@ -1,0 +1,8 @@
+- name: Update package manager cache
+  ansible.builtin.yum:
+    update_cache: true
+
+- name: Ensure Java 11 (openjdk) is installed
+  ansible.builtin.yum:
+    name: java-11-openjdk
+    state: present

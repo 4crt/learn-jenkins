@@ -1,0 +1,37 @@
+- name: Add Jenkins software repository
+  ansible.builtin.yum_repository:
+    name: jenkins.repo
+    description: Jenkins repo
+    baseurl: https://pkg.jenkins.io/redhat-stable
+    gpgkey: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+    gpgcheck: true
+
+- name: Ensure Jenkins is installed
+  ansible.builtin.package:
+    name: jenkins
+    state: latest
+
+- name: Start Jenkins and configure to run it at boot
+  ansible.builtin.service:
+    name: jenkins
+    state: started
+    enabled: true
+
+- name: Check initial admin password
+  ansible.builtin.stat:
+    path: /var/lib/jenkins/secrets/initialAdminPassword
+  register: initialAdminPassword
+
+- debug:
+    var: initialAdminPassword
+
+- name: Get know Jenkins initial admin password
+  command: "cat /var/lib/jenkins/secrets/initialAdminPassword"
+  register: initial_admin_password
+  changed_when: false
+  when: initialAdminPassword.stat.exists
+
+- name: Get initial admin password
+  debug:
+    msg: "Initial admin password is {{ initial_admin_password.stdout }}"
+  when: initialAdminPassword.stat.exists
